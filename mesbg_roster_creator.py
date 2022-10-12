@@ -1,4 +1,6 @@
 from random import randint, choices, shuffle
+import sys
+import getopt
 import math
 
 class Hero:
@@ -33,8 +35,10 @@ class Warrior:
 # How to use:
 # Edit the target points and bow ratio below and input your collection separated as heroes and warriors.
 # For each type of model, input the quantity you have of it, its name, points, the retinue capacity, bow, and options.
-# Then, run on the terminal:
-# python3 mesbg_roster_creator.py
+# Then, run on the terminal: 'python3 mesbg_roster_creator.py'
+# You may use command line arguments to set points, bow ration and what army to use.
+# eg: 'python3 mesbg_roster_creator.py -p 1000 -a rivendell'
+# Type 'python3 mesbg_roster_creator.py --help' for more info.
 
 # Note: this program does not take into consideration any army-building special rules, like Elrond's, for example.
 # Note: this program does not work with alliances.
@@ -51,26 +55,62 @@ class Warrior:
 
 target_points = 500
 bow_ratio = 1 / 3
+collection = {}
 
-heroes = [
-        #         no,  name,                  points,     retinue,    options
-        Hero (    1,   "Elrond",              180,        18,         "Heavy Armor" ),
-        Hero (    1,   "Glorfindel",          145,        15,         "" ),
-        Hero (    1,   "Glorfindel",          160,        15,         "Armor of Gondolin" ),
-        Hero (    2,   "High Elf Captain",    80,         12,         "Shield" ),
-        Hero (    1,   "High Elf Captain",    95,         12,         "Horse, Lance, Elf Bow" ),
+collection['rivendell'] = {
+    'heroes': [
+        #         no,  name,                      points,     retinue,    options
+        Hero    ( 1,   "Elrond",                  180,        18,         "Heavy Armor" ),
+        # Hero    ( 1,   "Glorfindel",              145,        15,         "" ),
+        Hero    ( 1,   "Glorfindel",              160,        15,         "Armor of Gondolin" ),
+        Hero    ( 2,   "High Elf Captain",        80,         12,         "Shield" ),
+        # Hero    ( 1,   "High Elf Captain",        95,         12,         "Horse, Lance, Elf Bow" ),
+        ],
+    'warriors': [
+        #         no,  name,                      points,     bow,        options
+        Warrior ( 9,   "High Elf Warrior",        9,          False,      "" ),
+        Warrior ( 8,   "High Elf Warrior",        11,         True,       "Elf Bow" ),
+        Warrior ( 13,  "High Elf Warrior",        11,         False,      "Shield, Spear" ),
+        Warrior ( 1,   "High Elf Warrior",        41,         True,       "Bow, Horn" ),
+        Warrior ( 1,   "High Elf Warrior",        34,         False,      "Banner" ),
+        Warrior ( 1,   "High Elf Warrior",        34,         False,      "Banner" ),
+        # Warrior ( 4,   "Rivendell Knight",        21,         True,       "" ),
+        # Warrior ( 1,   "Rivendell Knight",        46,         True,       "Banner" ),
         ]
+    }
 
-warriors = [
-        #         no,  name,                  points,     bow,        options
-        Warrior ( 10,  "High Elf Warrior",    9,          False,      "" ),
-        Warrior ( 8,   "High Elf Warrior",    11,         True,       "Elf Bow" ),
-        Warrior ( 9,   "High Elf Warrior",    11,         False,      "Shield, Spear" ),
-        Warrior ( 1,   "High Elf Warrior",    41,         True,       "Bow, Horn" ),
-        Warrior ( 2,   "High Elf Warrior",    34,         False,      "Banner" ),
-        Warrior ( 4,   "Rivendell Knight",    21,         True,       "" ),
-        Warrior ( 1,   "Rivendell Knight",    46,         True,       "Banner" ),
+collection['numenor'] = {
+    'heroes': [
+        #         no,  name,                      points,     retinue,    options
+        Hero    ( 1,   "Elendil",                 185,        18,         "" ),
+        Hero    ( 1,   "Isildur",                 120,        15,         "" ),
+        Hero    ( 1,   "Captain of Numenor",      60,         12,         "Heavy Armor, Shield" ),
+        ],
+    'warriors': [
+        #         no,  name,                      points,     bow,        options
+        Warrior ( 8,   "Warrior of Numenor",      9,          False,      "Shield" ),
+        Warrior ( 8,   "Warrior of Numenor",      10,         False,      "Shield, Spear" ),
+        Warrior ( 3,   "Warrior of Numenor",      9,          True,       "Bow" ),
+        Warrior ( 1,   "Warrior of Numenor",      34,         False,      "Shield, Banner" ),
         ]
+    }
+
+collection['minas_tirith'] = {
+    'heroes': [
+        #         no,  name,                      points,     retinue,    options
+        Hero    ( 1,   "Captain of Minas Tirith", 55,         12,         "Armor, Shield" ),
+        ],
+    'warriors': [
+        #         no,  name,              irith   points,     bow,        options
+        Warrior ( 4,   "Warrior of Minas Tirith", 8,          False,      "Shield" ),
+        Warrior ( 4,   "Warrior of Minas Tirith", 9,          False,      "Shield, Spear" ),
+        Warrior ( 4,   "Warrior of Minas Tirith", 8,          True,       "Bow" ),
+        ]
+    }
+
+
+heroes = []
+warriors = []
 
 class Army:
     def __init__(self, target_points):
@@ -164,6 +204,33 @@ def genetic_level(army):
 
 
 if __name__ == "__main__":
+    try:
+        optlist, args = getopt.getopt(
+                sys.argv[1:],
+                'p:b:a:h',
+                ['points=', 'bow=', 'army=', 'help'])
+
+        for o, a in optlist:
+            if o in ['-p', '--points']:
+                target_points = int(a)
+            elif o in ['-a', '--army']:
+                heroes = collection[a]['heroes']
+                warriors = collection[a]['warriors']
+            elif o in ['-b', '--bow']:
+                bow_ratio = eval(a)
+            elif o in ['-h', '--help']:
+                print('options: ')
+                print('  -p --points: the total points of the army.')
+                print('  -a --army: what army to use from your collection. Edit your collection in the code itself.')
+                print('  -b --bow: bow ratio. Set it as a string, eg: "1/2". Default is "1/3".')
+                print('  -h --help: show this help message.')
+                print('example: python3 mesbg_roster_creator.py -p 1000 -a rivendell')
+                exit()
+
+    except getopt.GetoptError as e:
+        print(e)
+        exit()
+
     total_candidates = 10000
     army = Army(target_points)
     army.generate_roster()
